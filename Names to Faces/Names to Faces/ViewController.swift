@@ -9,6 +9,10 @@ import UIKit
 
 class ViewController: UICollectionViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    // MARK: - Properties
+    
+    var people = [Person]()
+    
     // MARK: - Lifecycle
     
     override func viewDidLoad() {
@@ -39,6 +43,10 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
             try? jpegData.write(to: imagePath)
         }
         
+        let person = Person(name: "Unknown", image: imageName)
+        people.append(person)
+        collectionView.reloadData()
+        
         dismiss(animated: true)
     }
     
@@ -50,18 +58,48 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
     // MARK: - UICollectionViewController Method Overrides
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 10
+        return people.count
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Person", for: indexPath) as? PersonCell else {
-            // we failed to get a PersonCell - bail out!
             
+            // we failed to get a PersonCell - bail out!
             fatalError("Unable to dequeue reusable cell")
         }
         
+        let person = people[indexPath.item]
+        
+        cell.name.text = person.name
+        
+        let path = getDocumentsDirectory().appendingPathComponent(person.image)
+        cell.imageView.image = UIImage(contentsOfFile: path.path)
+        
+        // Using CALayer to convert UIColor to CGColor
+        // and customizing border to present images in a more creative way
+        cell.imageView.layer.borderColor = UIColor(white: 0, alpha: 0.3).cgColor
+        cell.imageView.layer.borderWidth = 2
+        cell.imageView.layer.cornerRadius = 3
+        cell.layer.cornerRadius = 7
+        
         // if we're stil here it means we got a PersonCell, so we can return it
         return cell
+    }
+    
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let person = people[indexPath.item]
+        
+        // Using UIAlertController to allow for editing picture labels
+        let ac = UIAlertController(title: "Rename person", message: nil, preferredStyle: .alert)
+        ac.addTextField()
+        ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        ac.addAction(UIAlertAction(title: "OK", style: .default, handler: { [weak self, weak ac] _ in
+            guard let newName = ac?.textFields?[0].text else { return }
+            person.name = newName
+            self?.collectionView.reloadData()
+        }))
+        
+        present(ac, animated: true)
     }
 }
 
