@@ -7,7 +7,7 @@
 
 import UIKit
 
-class Person: NSObject {
+class Person: NSObject, NSCoding {
     
     // MARK: - Properties
     var name: String
@@ -16,5 +16,16 @@ class Person: NSObject {
     init(name: String, image: String) {
         self.name = name
         self.image = image
+    }
+    
+    // MARK: - NSObject/NSCoding Method Conformance
+    required init(coder aDecoder: NSCoder) {
+        name = aDecoder.decodeObject(forKey: "name") as? String ?? ""
+        image = aDecoder.decodeObject(forKey: "image") as? String ?? ""
+    }
+    
+    func encode(with aCoder: NSCoder) {
+        aCoder.encode(name, forKey: "name")
+        aCoder.encode(image, forKey: "image")
     }
 }

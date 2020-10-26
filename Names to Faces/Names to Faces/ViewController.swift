@@ -20,6 +20,14 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         
         // Do any additional setup after loading the view.
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
+        
+        let defaults = UserDefaults.standard
+        
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            if let decodedPeople = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(savedPeople) as? [Person] {
+                people = decodedPeople
+            }
+        }
     }
     
     // MARK: - Selectors
@@ -31,7 +39,15 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         present(picker, animated: true)
     }
     
-    // MARK: - UIImagePickerControllerDelegate Method Conformancies
+    //MARK: - Helper Functions
+    func save() {
+        if let savedData = try? NSKeyedArchiver.archivedData(withRootObject: people, requiringSecureCoding: false) {
+            let defaults = UserDefaults.standard
+            defaults.set(savedData, forKey: "people")
+        }
+    }
+    
+    // MARK: - UIImagePickerControllerDelegate Method Conformance
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         guard let image = info[.editedImage] as? UIImage else { return }
@@ -46,6 +62,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         let person = Person(name: "Unknown", image: imageName)
         people.append(person)
         collectionView.reloadData()
+        save()
         
         dismiss(animated: true)
     }
@@ -55,7 +72,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         return paths[0]
     }
     
-    // MARK: - UICollectionViewController Method Overrides
+    // MARK: - UICollectionViewController Method Conformance
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return people.count
@@ -97,6 +114,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
             guard let newName = ac?.textFields?[0].text else { return }
             person.name = newName
             self?.collectionView.reloadData()
+            self?.save()
         }))
         
         present(ac, animated: true)
